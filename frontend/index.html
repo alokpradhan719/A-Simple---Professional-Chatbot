@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alok Pradhan Chatbot</title>
+    <meta name="author" content="Alok Pradhan">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 700px;
+            display: flex;
+            flex-direction: column;
+            height: 750px;
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px 15px 0 0;
+            text-align: center;
+            border-bottom: 3px solid #00d4ff;
+        }
+        .header h1 { font-size: 28px; margin-bottom: 5px; font-weight: 700; letter-spacing: 1px; }
+        .header p { font-size: 13px; opacity: 0.95; margin-bottom: 5px; }
+        .header .subtitle { font-size: 11px; opacity: 0.8; color: #00d4ff; font-style: italic; }
+        .chat-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #f9f9f9;
+        }
+        .message { display: flex; gap: 10px; animation: slideIn 0.3s ease-in-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .user-message { justify-content: flex-end; }
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+        .user-message .message-content { background: #1e3c72; color: white; border-radius: 12px 0 12px 12px; }
+        .bot-message .message-content { background: #e8f4f8; color: #333; border-radius: 0 12px 12px 12px; border-left: 3px solid #1e3c72; }
+        .input-area { display: flex; gap: 10px; padding: 15px; border-top: 1px solid #ddd; background: white; border-radius: 0 0 15px 15px; }
+        #messageInput {
+            flex: 1;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            padding: 12px 20px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        #messageInput:focus { outline: none; border-color: #1e3c72; box-shadow: 0 0 10px rgba(30, 60, 114, 0.3); }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            white-space: nowrap;
+        }
+        #sendBtn { background: #1e3c72; color: white; padding: 12px 24px; }
+        #sendBtn:hover { background: #2a5298; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(30, 60, 114, 0.4); }
+        .quick-btn { background: #f0f0f0; color: #333; border: 1px solid #ddd; }
+        .quick-btn:hover { background: #e0e0e0; transform: translateY(-2px); }
+        .typing { display: flex; gap: 5px; padding: 8px 16px; }
+        .typing span {
+            width: 8px;
+            height: 8px;
+            background: #999;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing span:nth-child(2) { animation-delay: 0.2s; }
+        .typing span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.7; }
+            30% { transform: translateY(-10px); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Alok Pradhan Chatbot</h1>
+            <p>AI Assistant - Math | Jokes | Dictionary | Chat</p>
+            <div class="subtitle">Created by Alok Pradhan • Professional Edition v1.0</div>
+        </div>
+        
+        <div class="chat-area" id="chatArea">
+            <div class="message bot-message">
+                <div class="message-content">
+                    👋 Welcome to Alok Pradhan Chatbot!
+                    <br><br>I can help with:
+                    <br>• 🧮 Math: "5 + 3", "10 * 2", "square 5", "sqrt 16"
+                    <br>• 😂 Jokes: "tell me a joke"
+                    <br>• 📚 Dictionary: "definition of python"
+                    <br>• 💬 Chat: Just talk!
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-area">
+            <input type="text" id="messageInput" placeholder="Ask me anything..." autocomplete="off" />
+            <div class="btn-group">
+                <button class="quick-btn" onclick="sendMessage('tell me a joke')">😂 Joke</button>
+                <button class="quick-btn" onclick="sendMessage('help')">❓ Help</button>
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const chatArea = document.getElementById('chatArea');
+        const messageInput = document.getElementById('messageInput');
+        let isFirstMessage = true;
+        
+        class ChatbotAI {
+            constructor() {
+                this.name = "Alok Pradhan Chatbot";
+                this.version = "1.0";
+                this.author = "Alok Pradhan";
+            }
+            
+            getResponse(input) {
+                const lower = input.toLowerCase().trim();
+                if (!input) return "Please say something!";
+                if (lower.includes('hello') || lower.includes('hi') || lower.includes('hey')) return `Hello! I'm ${this.name}. How can I help?`;
+                if (lower.includes('bye') || lower.includes('goodbye')) return "Goodbye! Have a great day! 👋";
+                if (lower.includes('joke') || lower.includes('funny') || lower.includes('laugh')) return this.tellJoke();
+                if (lower.includes('+') || lower.includes('-') || lower.includes('*') || lower.includes('/') || 
+                    lower.includes('square') || lower.includes('sqrt') || lower.includes('math')) return this.handleMath(input);
+                if (lower.includes('definition') || lower.includes('mean') || lower.includes('what is') || lower.includes('dictionary')) return this.handleDictionary(input);
+                if (lower.includes('time')) return `Current time: ${new Date().toLocaleTimeString()}`;
+                if (lower.includes('date') || lower.includes('today')) return `Today: ${new Date().toLocaleDateString()}`;
+                if (lower.includes('who are you') || lower.includes('name') || lower.includes('creator')) return `I'm ${this.name} v${this.version}\nCreated by ${this.author}`;
+                if (lower.includes('help') || lower.includes('what can you do')) return this.getHelp();
+                return this.getDefaultResponse();
+            }
+            
+            tellJoke() {
+                const jokes = [
+                    "Why did the programmer quit? Because he didn't get arrays! 😂",
+                    "Why do programmers prefer dark mode? Light attracts bugs! 🐛",
+                    "How many programmers to change a light bulb? None, that's hardware! 💡",
+                    "Why did Python go to gym? To get more fit! 💪",
+                    "What's OOP wealth? Inheritance! 💰"
+                ];
+                return jokes[Math.floor(Math.random() * jokes.length)];
+            }
+            
+            handleMath(input) {
+                try {
+                    if (input.includes('+')) {
+                        const parts = input.split('+').map(p => parseFloat(p.trim())).filter(n => !isNaN(n));
+                        if (parts.length > 0) return `Result: ${parts.reduce((a, b) => a + b, 0)}`;
+                    }
+                    if (input.includes('-') && input.split('-').length === 2) {
+                        const parts = input.split('-').map(p => parseFloat(p.trim()));
+                        if (!isNaN(parts[0]) && !isNaN(parts[1])) return `Result: ${parts[0] - parts[1]}`;
+                    }
+                    if (input.includes('*')) {
+                        const parts = input.split('*').map(p => parseFloat(p.trim()));
+                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) return `Result: ${parts[0] * parts[1]}`;
+                    }
+                    if (input.includes('/')) {
+                        const parts = input.split('/').map(p => parseFloat(p.trim()));
+                        if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                            if (parts[1] === 0) return "Cannot divide by zero!";
+                            return `Result: ${(parts[0] / parts[1]).toFixed(2)}`;
+                        }
+                    }
+                    if (input.toLowerCase().includes('square')) {
+                        const regex = /square\s+([\d.]+)/i;
+                        const match = input.match(regex);
+                        if (match) return `Square of ${match[1]} is ${parseFloat(match[1]) ** 2}`;
+                    }
+                    if (input.toLowerCase().includes('sqrt') || input.toLowerCase().includes('square root')) {
+                        const regex = /(?:sqrt|square root)\s+([\d.]+)/i;
+                        const match = input.match(regex);
+                        if (match) {
+                            const num = parseFloat(match[1]);
+                            if (num < 0) return "Cannot square root negative!";
+                            return `Square root of ${num} is ${Math.sqrt(num).toFixed(2)}`;
+                        }
+                    }
+                    return "Math help: '+', '-', '*', '/', 'square 5', 'sqrt 16'";
+                } catch (e) {
+                    return "Math error. Try: '5 + 3' or '10 * 2'";
+                }
+            }
+            
+            handleDictionary(input) {
+                const dict = {
+                    'python': 'High-level programming language.',
+                    'algorithm': 'Step-by-step procedure for solving a problem.',
+                    'variable': 'Named storage location for a value.',
+                    'function': 'Reusable block of code.',
+                    'loop': 'Control structure that repeats code.',
+                    'api': 'Interface for software communication.',
+                    'bug': 'Error or flaw in code.',
+                    'database': 'Organized data collection.',
+                    'array': 'Collection of elements.',
+                    'string': 'Sequence of characters.'
+                };
+                for (const [word, def] of Object.entries(dict)) {
+                    if (input.toLowerCase().includes(word)) return `📚 ${word.toUpperCase()}:\n${def}`;
+                }
+                return "Available: python, algorithm, variable, function, loop, api, bug, database, array, string";
+            }
+            
+            getHelp() {
+                return `ALOK PRADHAN CHATBOT v1.0
+Created by Alok Pradhan
+
+COMMANDS:
+• Math: "5 + 3", "10 * 2", "square 9", "sqrt 16"
+• Jokes: "Tell me a joke"
+• Dictionary: "definition of python"
+• Time: "what time"
+• Date: "what's the date"
+• Info: "who are you", "help"`;
+            }
+            
+            getDefaultResponse() {
+                return ["That's interesting! 🤔", "Tell me more!", "I see! 😊", "Interesting point!"][Math.floor(Math.random() * 4)];
+            }
+        }
+        
+        const chatbot = new ChatbotAI();
+        
+        function sendMessage(quickMsg = null) {
+            const message = quickMsg || messageInput.value.trim();
+            if (!message) return;
+            if (isFirstMessage) { chatArea.innerHTML = ''; isFirstMessage = false; }
+            messageInput.value = '';
+            messageInput.focus();
+            addMessage(message, 'user');
+            showTyping();
+            setTimeout(() => { removeTyping(); addMessage(chatbot.getResponse(message), 'bot'); }, 600);
+        }
+        
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender === 'user' ? 'user-message' : 'bot-message'}`;
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = text;
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function showTyping() {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message bot-message';
+            messageDiv.id = 'typingIndicator';
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'typing';
+            contentDiv.innerHTML = '<span></span><span></span><span></span>';
+            messageDiv.appendChild(contentDiv);
+            chatArea.appendChild(messageDiv);
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+        
+        function removeTyping() {
+            const typing = document.getElementById('typingIndicator');
+            if (typing) typing.remove();
+        }
+        
+        messageInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendMessage(); });
+    </script>
+</body>
+</html>
